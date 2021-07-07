@@ -16,5 +16,17 @@ CHIP PC {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+	// process inc
+	Inc16(in=regOut, out=incOut);
+	Mux16(a=regOut, b=incOut, sel=inc, out=incResult);
+
+	// process load
+	Mux16(a=incResult, b=in, sel=load, out=loadResult);
+
+	// process reset
+	Mux16(a=loadResult, sel=reset, out=resetResult);
+
+	// use register for update data at the moment
+	Register(in=resetResult, out=out, out=regOut, load=true);
+
 }
