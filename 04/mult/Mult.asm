@@ -9,4 +9,27 @@
 // This program only needs to handle arguments that satisfy
 // R0 >= 0, R1 >= 0, and R0*R1 < 32768.
 
-// Put your code here.
+@i // variable for iteration
+M=1
+@2 // initializes RAM[2] to zero
+M=0
+
+(LOOP)
+	@i
+	D=M
+	@1
+	D=D-M // i - RAM[1]
+	@END
+	D;JGT // if (i-RAM[1]) > 0 goto END
+	@i
+	M=M+1
+	@0
+	D=M
+	@2
+	M=D+M  // RAM[2] = RAM[2] + RAM[0]
+	@LOOP
+	0;JMP
+(END)
+    @END
+	0;JMP
+
