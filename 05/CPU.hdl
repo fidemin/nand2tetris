@@ -39,5 +39,47 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+
+	// Mux for selection between ALU out and instruction
+	Not(in=instruction[15], out=storeInst);
+	Mux16(a=aluOut, b=instruction, sel=storeInst, out=toA);
+
+	// implements A register
+	Or(a=storeInst, b=instruction[5], out=writeA);
+	ARegister(in=toA, load=writeA, out=aOut, out[0..14]=addressM);
+
+	// implements Mux for selection between A and M
+	Mux16(a=aOut, b=inM, sel=instruction[12], out=outAMMux);
+
+	// implements D register
+	And(a=instruction[15],b=instruction[4],out=writeD);
+	DRegister(in=aluOut, load=writeD, out=outD);
+
+	// implements ALU logic
+	ALU(x=outD, y = outAMMux, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], out=aluOut, out=outM,  zr=aluZR, ng=aluNG);
+
+	// jump condition with negative ALU out
+	And(a=instruction[15],b=instruction[2],out=jlt);
+	And(a=jlt, b=aluNG, out=jmpForNG);
+
+	// jump condition with zero ALU out
+	And(a=instruction[15],b=instruction[1],out=jeq);
+	And(a=jeq, b=aluZR, out=jmpForZR);
+
+	// jump condition with positive ALU out
+	Not(in=aluNG, out=notNG);
+	Not(in=aluZR, out=notZR);
+	And(a=notNG, b=notZR, out=pos);
+	And(a=instruction[15], b=instruction[0], out=jgt);
+	And(a=jgt, b=pos, out=jmpForPos);
+
+	// check jump condition
+	Or(a=jmpForNG, b=jmpForZR, out=jmpForNGZR);
+	Or(a=jmpForPos, b=jmpForNGZR, out=jump);
+
+	// implements PC part
+	PC(in=aOut, load=jump, inc=true, reset=reset, out[0..14]=pc);
+
+	// writeM
+	And(a=instruction[15], b=instruction[3],out=writeM);
 }
